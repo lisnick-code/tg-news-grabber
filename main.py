@@ -1,19 +1,21 @@
 import os
 import requests
 from telethon import TelegramClient, events
+from telethon.sessions import StringSession
 
 API_ID = int(os.environ.get("API_ID"))
 API_HASH = os.environ.get("API_HASH")
+SESSION_STRING = os.environ.get("STRING_SESSION")
 WEBHOOK_URL = os.environ.get("WEBHOOK_URL")
 
-# Список юзернеймов каналов без @
 TARGET_CHANNELS = [
     'advokatmillerua',
-    'ukraine_91'
-  'UaOnlii'
+    'ukraine_91',
+    'UaOnlii'
 ]
 
-client = TelegramClient('news_session', API_ID, API_HASH)
+# Авторизуемся по строке сессии без запроса телефона
+client = TelegramClient(StringSession(SESSION_STRING), API_ID, API_HASH)
 
 @client.on(events.NewMessage(chats=TARGET_CHANNELS))
 async def handler(event):
