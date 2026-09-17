@@ -1,8 +1,12 @@
 import os
+import asyncio
 import requests
+from http.server import HTTPServer, BaseHTTPRequestHandler
+import threading
 from telethon import TelegramClient, events
 from telethon.sessions import StringSession
 
+# Переменные окружения
 API_ID = int(os.environ.get("API_ID"))
 API_HASH = os.environ.get("API_HASH")
 SESSION_STRING = os.environ.get("STRING_SESSION")
@@ -14,7 +18,22 @@ TARGET_CHANNELS = [
     'UaOnlii'
 ]
 
-# Авторизуемся по строке сессии без запроса телефона
+# Минимальный веб-сервер для удовлетворения проверок Render (Port Check)
+class DummyHealthCheck(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"OK")
+
+def run_health_check_server():
+    port = int(os.environ.get("PORT", 10000))
+    server = HTTPServer(('0.0.0.0', port), DummyHealthCheck)
+    server.serve_forever()
+
+# Запускаем веб-сервер в отдельном потоке
+threading.Thread(target=run_health_check_server, daemon=True).start()
+
+# Инициализируем клиента Telegram
 client = TelegramClient(StringSession(SESSION_STRING), API_ID, API_HASH)
 
 @client.on(events.NewMessage(chats=TARGET_CHANNELS))
